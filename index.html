@@ -251,6 +251,57 @@
             max-height: 70vh;
             overflow-y: auto;
         }
+
+        /* Visit Notes Button Styles */
+        .visit-btn-group {
+            margin-bottom: 15px;
+        }
+
+        .visit-btn-group .btn {
+            margin: 2px;
+            min-width: 120px;
+        }
+
+        .visit-btn-group .btn.active {
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        /* Complete Turf Button */
+        .complete-turf-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: linear-gradient(45deg, #dc3545, #b02a37);
+            border: none;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .complete-turf-btn:hover {
+            background: linear-gradient(45deg, #b02a37, #dc3545);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(220, 53, 69, 0.6);
+        }
+
+        @media (max-width: 767px) {
+            .complete-turf-btn {
+                bottom: 10px;
+                right: 10px;
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+        }
+
+        /* Path line styles */
+        .leaflet-routing-container {
+            display: none;
+        }
     </style>
 </head>
 <body class="field-dashboard">
@@ -270,6 +321,11 @@
             </button>
         </div>
     </div>
+
+    <!-- Complete Turf Button (Field View Only) -->
+    <button class="complete-turf-btn field-only" onclick="completeTurf()">
+        <i class="fas fa-flag-checkered"></i> Complete Turf
+    </button>
 
     <!-- Canvasser Status (Field View) -->
     <div class="canvasser-status field-only">
@@ -305,15 +361,15 @@
                         <h6><i class="fas fa-clipboard-list"></i> Today's Assignment</h6>
                         <div class="row text-center">
                             <div class="col-4">
-                                <div class="h5" id="assignedCount">156</div>
+                                <div class="h5" id="assignedCount">0</div>
                                 <small>Assigned</small>
                             </div>
                             <div class="col-4">
-                                <div class="h5" id="fieldVisitedCount">23</div>
+                                <div class="h5" id="fieldVisitedCount">0</div>
                                 <small>Completed</small>
                             </div>
                             <div class="col-4">
-                                <div class="h5" id="fieldProgressPercent">15%</div>
+                                <div class="h5" id="fieldProgressPercent">0%</div>
                                 <small>Progress</small>
                             </div>
                         </div>
@@ -332,6 +388,7 @@
                         <!-- Message content -->
                     </div>
                 </div>
+                
                 <!-- Current Assignment -->
                 <div class="current-assignment" id="currentAssignment" style="display: none;">
                     <h6><i class="fas fa-crosshairs"></i> Current Assignment</h6>
@@ -394,32 +451,53 @@
                         </div>
 
                         <form id="notesForm">
-                            <div class="row mb-3">
-                                <div class="col-4">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="present">
-                                        <label class="form-check-label" for="present">Present</label>
-                                    </div>
-                                </div>
-                                <div class="col-4">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="willVote">
-                                        <label class="form-check-label" for="willVote">Will Vote</label>
-                                    </div>
-                                </div>
-                                <div class="col-4">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="nextTime">
-                                        <label class="form-check-label" for="nextTime">Next Time</label>
-                                    </div>
+                            <!-- Present/Not Present -->
+                            <div class="visit-btn-group">
+                                <label class="form-label small"><strong>Presence:</strong></label><br>
+                                <div class="btn-group w-100" role="group">
+                                    <input type="radio" class="btn-check" name="presentRadio" id="presentYes" value="true">
+                                    <label class="btn btn-outline-success" for="presentYes">Present</label>
+                                    
+                                    <input type="radio" class="btn-check" name="presentRadio" id="presentNo" value="false">
+                                    <label class="btn btn-outline-danger" for="presentNo">Not Present</label>
                                 </div>
                             </div>
+
+                            <!-- Will Vote/Will Not Vote -->
+                            <div class="visit-btn-group">
+                                <label class="form-label small"><strong>Voting Intention:</strong></label><br>
+                                <div class="btn-group w-100" role="group">
+                                    <input type="radio" class="btn-check" name="voteRadio" id="willVoteYes" value="true">
+                                    <label class="btn btn-outline-primary" for="willVoteYes">Will Vote</label>
+                                    
+                                    <input type="radio" class="btn-check" name="voteRadio" id="willVoteNo" value="false">
+                                    <label class="btn btn-outline-warning" for="willVoteNo">Will Not Vote</label>
+                                </div>
+                            </div>
+
+                            <!-- Visit Again/Not Visit Again -->
+                            <div class="visit-btn-group">
+                                <label class="form-label small"><strong>Follow-up:</strong></label><br>
+                                <div class="btn-group w-100" role="group">
+                                    <input type="radio" class="btn-check" name="visitAgainRadio" id="visitAgainYes" value="true">
+                                    <label class="btn btn-outline-info" for="visitAgainYes">Visit Again</label>
+                                    
+                                    <input type="radio" class="btn-check" name="visitAgainRadio" id="visitAgainNo" value="false">
+                                    <label class="btn btn-outline-secondary" for="visitAgainNo">Not Visit Again</label>
+                                </div>
+                            </div>
+
+                            <!-- Conversation Notes -->
                             <div class="mb-3">
+                                <label class="form-label small"><strong>Conversation Notes:</strong></label>
                                 <textarea class="form-control" id="voterNotes" rows="3" placeholder="Conversation notes..."></textarea>
                             </div>
+
+                            <!-- Support Level -->
                             <div class="mb-3">
+                                <label class="form-label small"><strong>Support Level:</strong></label>
                                 <select class="form-select" id="supportLevel">
-                                    <option value="">Support Level...</option>
+                                    <option value="">Select Support Level...</option>
                                     <option value="strong-support">Strong Support</option>
                                     <option value="lean-support">Lean Support</option>
                                     <option value="undecided">Undecided</option>
@@ -427,6 +505,7 @@
                                     <option value="strong-oppose">Strong Oppose</option>
                                 </select>
                             </div>
+                            
                             <button type="submit" class="btn btn-success w-100" id="submitBtn" disabled>
                                 <i class="fas fa-save"></i> Complete Visit
                             </button>
@@ -527,11 +606,11 @@
                                 <small>Active</small>
                             </div>
                             <div class="col-4">
-                                <div class="h4" id="hourlyRate">12</div>
+                                <div class="h4" id="hourlyRate">0</div>
                                 <small>Per Hour</small>
                             </div>
                             <div class="col-4">
-                                <div class="h4" id="completionRate">15%</div>
+                                <div class="h4" id="completionRate">0%</div>
                                 <small>Complete</small>
                             </div>
                         </div>
@@ -711,40 +790,12 @@
                             </select>
                         </div>
                         <div class="col-6">
-                            <label class="form-label small">Age Group</label>
-                            <select class="form-select form-select-sm" id="fieldAgeFilter">
-                                <option value="">All Ages</option>
-                                <option value="18-25">18-25</option>
-                                <option value="26-35">26-35</option>
-                                <option value="36-45">36-45</option>
-                                <option value="46-55">46-55</option>
-                                <option value="56-65">56-65</option>
-                                <option value="65+">65+</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="row g-2 mt-2">
-                        <div class="col-6">
-                            <label class="form-label small">Race/Ethnicity</label>
-                            <select class="form-select form-select-sm" id="fieldRaceFilter">
-                                <option value="">All Races</option>
-                                <option value="White">White</option>
-                                <option value="Hispanic">Hispanic/Latino</option>
-                                <option value="Black">Black/African American</option>
-                                <option value="Asian">Asian</option>
-                                <option value="Native American">Native American</option>
-                                <option value="Pacific Islander">Pacific Islander</option>
-                                <option value="Mixed">Mixed Race</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label small">Gender</label>
-                            <select class="form-select form-select-sm" id="fieldGenderFilter">
-                                <option value="">All Genders</option>
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                                <option value="Non-binary">Non-binary</option>
+                            <label class="form-label small">Dem Score</label>
+                            <select class="form-select form-select-sm" id="fieldDemScoreFilter">
+                                <option value="">All Scores</option>
+                                <option value="high">High (70+)</option>
+                                <option value="medium">Medium (40-69)</option>
+                                <option value="low">Low (10-39)</option>
                             </select>
                         </div>
                     </div>
@@ -814,15 +865,15 @@
                     <!-- Quick Stats -->
                     <div class="row mb-3">
                         <div class="col-4 text-center">
-                            <div class="h5 text-primary" id="modalAssignedCount">156</div>
+                            <div class="h5 text-primary" id="modalAssignedCount">0</div>
                             <small class="text-muted">Assigned</small>
                         </div>
                         <div class="col-4 text-center">
-                            <div class="h5 text-success" id="modalCompletedCount">23</div>
+                            <div class="h5 text-success" id="modalCompletedCount">0</div>
                             <small class="text-muted">Completed</small>
                         </div>
                         <div class="col-4 text-center">
-                            <div class="h5 text-warning" id="modalPendingCount">133</div>
+                            <div class="h5 text-warning" id="modalPendingCount">0</div>
                             <small class="text-muted">Pending</small>
                         </div>
                     </div>
@@ -855,6 +906,8 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 
     <script>
         // Global variables
@@ -868,6 +921,8 @@
         let markers = {};
         let canvasserMarker = null;
         let isDashboardField = true;
+        let routeLine = null;
+        let visitStartTime = null;
 
         // Location tracking variables
         let isLocationSharingActive = false;
@@ -888,7 +943,7 @@
                 name: "Demo User",
                 status: "active",
                 currentVoter: null,
-                location: { lat: 33.17855, lng: -96.78403 },
+                location: { lat: 33.17854842488629, lng: -96.78402904191564 },
                 timeAtLocation: 0,
                 todayVisits: 0,
                 assignedVoters: [],
@@ -899,6 +954,9 @@
         // Message system
         let messageLog = [];
         let currentUserId = 1; // Simulated current field worker ID
+
+        // Visit tracking
+        let visitLog = [];
 
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
@@ -949,6 +1007,9 @@
                     };
                     updateLocationSharingStatus('Location access granted - Ready for canvassing');
                     showNotification('Location access granted. GPS tracking is now active.', 'success');
+                    
+                    // Update canvasser marker
+                    updateCanvasserMarker();
                     
                     // Start location tracking automatically on mobile
                     if (window.innerWidth <= 768) {
@@ -1027,8 +1088,8 @@
 
         // Create demo assignments for testing
         function createDemoAssignments() {
-            // Assign first 50 voters to current user for testing
-            const unassignedVoters = votersData.filter(v => !v.assignedTo).slice(0, 50);
+            // Assign ALL voters to current user for testing (not just 50)
+            const unassignedVoters = votersData.filter(v => !v.assignedTo);
             
             unassignedVoters.forEach(voter => {
                 voter.assignedTo = currentUserId;
@@ -1287,33 +1348,6 @@
             document.getElementById('locationSharingStatus').textContent = message;
         }
 
-        function toggleLocationSharing() {
-            if (isLocationSharingActive) {
-                stopLocationTracking();
-            } else {
-                startLocationTracking();
-            }
-        }
-
-        function logCurrentLocation() {
-            if (!canvasserLocation) {
-                showNotification('Location not available', 'warning');
-                return;
-            }
-
-            const logEntry = {
-                timestamp: new Date(),
-                lat: canvasserLocation.lat,
-                lng: canvasserLocation.lng,
-                accuracy: currentAccuracy,
-                action: 'Manual check-in',
-                voter: currentVoter ? currentVoter.name : 'No target selected'
-            };
-
-            locationLog.push(logEntry);
-            showNotification('Location logged successfully', 'success');
-        }
-
         function logLocationForAdmin() {
             // Update canvasser data for admin view
             const canvasser = canvassers.find(c => c.id === currentUserId);
@@ -1510,20 +1544,24 @@ ${voterPlacemarks}
 
         // Initialize Leaflet map
         function initializeMap() {
-            map = L.map('map').setView([33.17855, -96.78403], 13);
+            map = L.map('map').setView([33.17854842488629, -96.78402904191564], 13);
             
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap contributors'
             }).addTo(map);
         }
 
-        // Generate demo voter data
+        // Generate demo voter data within 1 mile radius
         function generateDemoData() {
             votersData = [];
             filteredVoters = [];
             markers = {};
             
-            const streets = ['Main St', 'Oak Ave', 'Elm St', 'Park Dr', 'Cedar Ln', 'Pine St', 'Maple Ave', 'First St', 'Second St', 'Third St'];
+            const centerLat = 33.17854842488629;
+            const centerLng = -96.78402904191564;
+            const maxDistanceKm = 1.609; // 1 mile in km
+            
+            const streets = ['Main St', 'Oak Ave', 'Elm St', 'Park Dr', 'Cedar Ln', 'Pine St', 'Maple Ave', 'First St', 'Second St', 'Third St', 'Fourth St', 'Fifth St', 'Sixth St', 'Seventh St', 'Eighth St', 'Ninth St', 'Tenth St'];
             const parties = ['Democrat', 'Republican', 'Independent'];
             const ageClasses = ['18-25', '26-35', '36-45', '46-55', '56-65', '65+'];
             const races = ['White', 'Hispanic', 'Black', 'Asian', 'Other'];
@@ -1531,10 +1569,16 @@ ${voterPlacemarks}
             const zipCodes = ['75034', '75035', '75036'];
             const precincts = ['P001', 'P002', 'P003', 'P004', 'P005'];
 
-            // Generate 500 voters
+            // Generate 500 voters within 1 mile radius
             for (let i = 0; i < 500; i++) {
-                const lat = 33.17855 + (Math.random() - 0.5) * 0.02;
-                const lng = -96.78403 + (Math.random() - 0.5) * 0.02;
+                // Generate random point within circle
+                const angle = Math.random() * 2 * Math.PI;
+                const distance = Math.sqrt(Math.random()) * maxDistanceKm; // Square root for uniform distribution
+                
+                // Convert to lat/lng
+                const lat = centerLat + (distance / 111) * Math.cos(angle);
+                const lng = centerLng + (distance / (111 * Math.cos(centerLat * Math.PI / 180))) * Math.sin(angle);
+                
                 const street = streets[Math.floor(Math.random() * streets.length)];
                 const houseNumber = Math.floor(Math.random() * 9999) + 1;
                 
@@ -1552,14 +1596,16 @@ ${voterPlacemarks}
                     race: races[Math.floor(Math.random() * races.length)],
                     gender: genders[Math.floor(Math.random() * genders.length)],
                     precinct: precincts[Math.floor(Math.random() * precincts.length)],
+                    demScore: Math.floor(Math.random() * 86) + 10, // 10-95
                     visited: false,
                     notes: '',
-                    present: false,
-                    willVote: false,
-                    nextTime: false,
+                    present: null,
+                    willVote: null,
+                    visitAgain: null,
                     supportLevel: '',
                     visitedAt: null,
-                    assignedTo: null // For worker assignment
+                    assignedTo: null, // For worker assignment
+                    timeSpentSeconds: 0
                 };
                 
                 votersData.push(voter);
@@ -1572,8 +1618,8 @@ ${voterPlacemarks}
 
         // Generate random names
         function generateRandomName() {
-            const firstNames = ['John', 'Jane', 'Michael', 'Sarah', 'David', 'Emily', 'Robert', 'Lisa', 'James', 'Maria', 'William', 'Jennifer', 'Richard', 'Patricia', 'Charles', 'Linda'];
-            const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas'];
+            const firstNames = ['John', 'Jane', 'Michael', 'Sarah', 'David', 'Emily', 'Robert', 'Lisa', 'James', 'Maria', 'William', 'Jennifer', 'Richard', 'Patricia', 'Charles', 'Linda', 'Christopher', 'Barbara', 'Daniel', 'Susan', 'Matthew', 'Jessica', 'Anthony', 'Karen', 'Mark', 'Nancy', 'Donald', 'Betty', 'Steven', 'Helen', 'Paul', 'Sandra', 'Andrew', 'Donna', 'Joshua', 'Carol'];
+            const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas', 'Taylor', 'Moore', 'Jackson', 'Martin', 'Lee', 'Perez', 'Thompson', 'White', 'Harris', 'Sanchez', 'Clark', 'Ramirez', 'Lewis', 'Robinson'];
             
             const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
             const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
@@ -1619,6 +1665,7 @@ ${voterPlacemarks}
                         <strong>${voter.name}</strong><br>
                         <small class="text-muted">${voter.address}</small><br>
                         <span class="badge" style="background-color: ${color}; color: white;">${voter.party}</span>
+                        <span class="badge bg-info">Dem: ${voter.demScore}</span><br>
                         ${visitedBadge}<br>
                         <button class="btn btn-sm btn-primary mt-2" onclick="selectVoter(${voter.id})">
                             <i class="fas fa-crosshairs"></i> Select
@@ -1662,6 +1709,71 @@ ${voterPlacemarks}
                     </div>
                 `);
             }
+        }
+
+        // Draw route line to nearest voter with road approximation
+        function drawRouteToVoter(voter) {
+            // Remove existing route line
+            if (routeLine) {
+                map.removeLayer(routeLine);
+            }
+            
+            if (!canvasserLocation || !voter) return;
+            
+            // Create approximate road route (simplified - in reality would use routing API)
+            const waypoints = generateRoadWaypoints(canvasserLocation, voter);
+            
+            // Create green line following waypoints
+            routeLine = L.polyline(waypoints, {
+                color: '#28a745',
+                weight: 4,
+                opacity: 0.8,
+                dashArray: '10, 10'
+            }).addTo(map);
+            
+            // Add distance annotation
+            const distance = calculateDistance(canvasserLocation.lat, canvasserLocation.lng, voter.lat, voter.lng);
+            const distanceInFeet = Math.round(distance * 3280.84);
+            
+            // Add popup to route showing distance
+            const midPoint = waypoints[Math.floor(waypoints.length / 2)];
+            L.popup()
+                .setLatLng(midPoint)
+                .setContent(`<div class="text-center"><strong>${distanceInFeet}ft</strong><br><small>to ${voter.name}</small></div>`)
+                .openOn(map);
+            
+            // Fit map to show route
+            const group = new L.featureGroup([canvasserMarker, markers[voter.id], routeLine]);
+            map.fitBounds(group.getBounds().pad(0.1));
+        }
+
+        // Generate approximate road waypoints (simplified road following)
+        function generateRoadWaypoints(start, end) {
+            const waypoints = [];
+            waypoints.push([start.lat, start.lng]);
+            
+            // Simple road approximation - create intermediate points that follow a more realistic path
+            const latDiff = end.lat - start.lat;
+            const lngDiff = end.lng - start.lng;
+            
+            // Add waypoints that simulate following roads (simplified algorithm)
+            const numSegments = 3;
+            for (let i = 1; i < numSegments; i++) {
+                const progress = i / numSegments;
+                
+                // Add some deviation to simulate road curves
+                const deviation = 0.0005; // Small deviation for road simulation
+                const latDeviation = (Math.random() - 0.5) * deviation;
+                const lngDeviation = (Math.random() - 0.5) * deviation;
+                
+                const wayLat = start.lat + (latDiff * progress) + latDeviation;
+                const wayLng = start.lng + (lngDiff * progress) + lngDeviation;
+                
+                waypoints.push([wayLat, wayLng]);
+            }
+            
+            waypoints.push([end.lat, end.lng]);
+            return waypoints;
         }
 
         // Populate filter dropdowns
@@ -1783,7 +1895,10 @@ ${voterPlacemarks}
                                 <div class="flex-grow-1">
                                     <strong>${voter.name}</strong>
                                     <br><small class="text-muted">${voter.address}</small>
-                                    <br><small><span class="badge" style="background-color: ${getPartyColor(voter.party)}; color: white; font-size: 0.7rem;">${voter.party}</span> | ${voter.ageClass}</small>
+                                    <br><small>
+                                        <span class="badge" style="background-color: ${getPartyColor(voter.party)}; color: white; font-size: 0.7rem;">${voter.party}</span> 
+                                        <span class="badge bg-info" style="font-size: 0.7rem;">Dem: ${voter.demScore}</span>
+                                    </small>
                                     ${voter.visited ? `<br><small class="text-success"><i class="fas fa-check"></i> Visited ${new Date(voter.visitedAt).toLocaleDateString()}</small>` : ''}
                                 </div>
                                 <div class="text-end">
@@ -1833,9 +1948,11 @@ ${voterPlacemarks}
                                 <div class="flex-grow-1">
                                     <strong>${voter.name}</strong>
                                     <br><small class="text-muted">${voter.address}</small>
-                                    <br><small><span class="badge" style="background-color: ${getPartyColor(voter.party)}; color: white; font-size: 0.7rem;">${voter.party}</span></small>
-                                    <br><small class="text-muted">${voter.ageClass} | ${voter.race} | ${voter.gender}</small>
-                                    <br><small class="text-info">Precinct: ${voter.precinct}</small>
+                                    <br><small>
+                                        <span class="badge" style="background-color: ${getPartyColor(voter.party)}; color: white; font-size: 0.7rem;">${voter.party}</span>
+                                        <span class="badge bg-info" style="font-size: 0.7rem;">Dem: ${voter.demScore}</span>
+                                    </small>
+                                    <br><small class="text-muted">Precinct: ${voter.precinct}</small>
                                     ${voter.visited ? `<br><small class="text-success">✓ Completed ${new Date(voter.visitedAt).toLocaleDateString()}</small>` : ''}
                                 </div>
                                 <div class="text-end">
@@ -1846,44 +1963,6 @@ ${voterPlacemarks}
                     </div>
                 `;
             }).join('');
-            
-            // Add summary stats
-            if (voters.length > 0) {
-                const partyStats = {};
-                const ageStats = {};
-                const raceStats = {};
-                
-                voters.forEach(v => {
-                    partyStats[v.party] = (partyStats[v.party] || 0) + 1;
-                    ageStats[v.ageClass] = (ageStats[v.ageClass] || 0) + 1;
-                    raceStats[v.race] = (raceStats[v.race] || 0) + 1;
-                });
-                
-                const summaryHtml = `
-                    <div class="mt-3 pt-3 border-top">
-                        <h6>Demographic Summary (${voters.length} voters)</h6>
-                        <div class="row">
-                            <div class="col-4">
-                                <small><strong>Party:</strong><br>
-                                ${Object.entries(partyStats).map(([party, count]) => `${party}: ${count}`).join('<br>')}
-                                </small>
-                            </div>
-                            <div class="col-4">
-                                <small><strong>Age:</strong><br>
-                                ${Object.entries(ageStats).slice(0, 3).map(([age, count]) => `${age}: ${count}`).join('<br>')}
-                                </small>
-                            </div>
-                            <div class="col-4">
-                                <small><strong>Race:</strong><br>
-                                ${Object.entries(raceStats).slice(0, 3).map(([race, count]) => `${race}: ${count}`).join('<br>')}
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                modalVoterList.innerHTML += summaryHtml;
-            }
         }
 
         // Get party color
@@ -1901,9 +1980,14 @@ ${voterPlacemarks}
             currentVoter = votersData.find(v => v.id === voterId);
             if (!currentVoter) return;
 
+            // Start timing the visit
+            visitStartTime = new Date();
+
             // Update map view based on dashboard type
             if (isDashboardField) {
                 map.setView([currentVoter.lat, currentVoter.lng], 17);
+                // Draw route to selected voter
+                drawRouteToVoter(currentVoter);
             } else {
                 map.setView([currentVoter.lat, currentVoter.lng], 16);
             }
@@ -1923,22 +2007,34 @@ ${voterPlacemarks}
                     <div class="d-flex align-items-center mb-2">
                         <h6 class="mb-0 me-2">${currentVoter.name}</h6>
                         <span class="badge" style="background-color: ${getPartyColor(currentVoter.party)}; color: white;">${currentVoter.party}</span>
+                        <span class="badge bg-info ms-1">Dem: ${currentVoter.demScore}</span>
                     </div>
                     <p class="mb-1"><i class="fas fa-map-marker-alt"></i> ${currentVoter.address}</p>
-                    <p class="mb-1"><small>${currentVoter.ageClass} | ${currentVoter.race} | ${currentVoter.gender}</small></p>
                     <p class="mb-0"><small>Precinct: ${currentVoter.precinct}</small></p>
                 `;
             }
 
             // Load existing notes if visited
             if (currentVoter.visited) {
-                document.getElementById('present').checked = currentVoter.present;
-                document.getElementById('willVote').checked = currentVoter.willVote;
-                document.getElementById('nextTime').checked = currentVoter.nextTime;
+                // Set radio buttons
+                if (currentVoter.present !== null) {
+                    document.querySelector(`input[name="presentRadio"][value="${currentVoter.present}"]`).checked = true;
+                }
+                if (currentVoter.willVote !== null) {
+                    document.querySelector(`input[name="voteRadio"][value="${currentVoter.willVote}"]`).checked = true;
+                }
+                if (currentVoter.visitAgain !== null) {
+                    document.querySelector(`input[name="visitAgainRadio"][value="${currentVoter.visitAgain}"]`).checked = true;
+                }
                 document.getElementById('voterNotes').value = currentVoter.notes;
                 document.getElementById('supportLevel').value = currentVoter.supportLevel;
             } else {
-                document.getElementById('notesForm').reset();
+                // Clear all radio buttons
+                document.querySelectorAll('input[type="radio"]').forEach(radio => {
+                    radio.checked = false;
+                });
+                document.getElementById('voterNotes').value = '';
+                document.getElementById('supportLevel').value = '';
             }
 
             // Check proximity immediately if location is available
@@ -1976,8 +2072,8 @@ ${voterPlacemarks}
             if (!canvasserLocation) {
                 // If no GPS location, use center of the area as fallback
                 canvasserLocation = {
-                    lat: 33.17855,
-                    lng: -96.78403
+                    lat: 33.17854842488629,
+                    lng: -96.78402904191564
                 };
                 showNotification('Using approximate location. Enable GPS for accurate results.', 'warning');
             }
@@ -2032,6 +2128,14 @@ ${voterPlacemarks}
             currentVoter.visitedAt = new Date().toISOString();
             currentVoter.present = false;
             currentVoter.notes = 'Not home';
+            currentVoter.timeSpentSeconds = visitStartTime ? Math.floor((new Date() - visitStartTime) / 1000) : 0;
+
+            // Add to visit log
+            visitLog.push({
+                voter: currentVoter,
+                visitTime: new Date(),
+                timeSpent: currentVoter.timeSpentSeconds
+            });
 
             // Update marker
             if (markers[currentVoter.id]) {
@@ -2042,10 +2146,22 @@ ${voterPlacemarks}
                 });
             }
 
+            // Clear current selection and find next
+            currentVoter = null;
+            if (isDashboardField) {
+                document.getElementById('currentAssignment').style.display = 'none';
+            }
+
             applyFilters();
             updateCounts();
+            updateFieldAssignmentInfo();
             
             showNotification('Marked as "Not Home"', 'info');
+            
+            // Auto-find next nearest voter
+            setTimeout(() => {
+                findNearestVoter();
+            }, 1000);
         }
 
         // Calculate distance between two points
@@ -2111,7 +2227,7 @@ ${voterPlacemarks}
             
             if (document.getElementById('activeCanvassers')) {
                 document.getElementById('activeCanvassers').textContent = activeCount;
-                document.getElementById('hourlyRate').textContent = Math.round(totalVisits * 60 / Math.max(1, timeInCurrentArea / 60));
+                document.getElementById('hourlyRate').textContent = Math.round(totalVisits * 60 / Math.max(1, timeInCurrentArea / 60)) || 0;
                 document.getElementById('completionRate').textContent = Math.round((visitedCount / votersData.length) * 100) + '%';
                 document.getElementById('activeWorkersCount').textContent = activeCount;
             }
@@ -2214,7 +2330,7 @@ ${voterPlacemarks}
         }
 
         function generateCSVData() {
-            const headers = ['Worker ID', 'Worker Name', 'Voter ID', 'Voter Name', 'Address', 'Party', 'Phone', 'Status', 'Notes'];
+            const headers = ['Worker ID', 'Worker Name', 'Voter ID', 'Voter Name', 'Address', 'Party', 'Dem Score', 'Status', 'Notes'];
             const rows = [headers.join(',')];
             
             votersData.forEach(voter => {
@@ -2227,7 +2343,7 @@ ${voterPlacemarks}
                         voter.name,
                         `"${voter.address}, ${voter.city}, ${voter.state} ${voter.zip}"`,
                         voter.party,
-                        '555-0000', // Simulated phone
+                        voter.demScore,
                         voter.visited ? 'Completed' : 'Pending',
                         `"${voter.notes}"`
                     ];
@@ -2341,9 +2457,9 @@ ${voterPlacemarks}
             
             // Response breakdown
             const responses = {
-                present: completedVoters.filter(v => v.present).length,
-                willVote: completedVoters.filter(v => v.willVote).length,
-                nextTime: completedVoters.filter(v => v.nextTime).length
+                present: completedVoters.filter(v => v.present === true).length,
+                willVote: completedVoters.filter(v => v.willVote === true).length,
+                visitAgain: completedVoters.filter(v => v.visitAgain === true).length
             };
             
             reportContainer.innerHTML = `
@@ -2370,7 +2486,7 @@ ${voterPlacemarks}
                             <small class="text-muted">Response Quality:</small><br>
                             <small>Present: ${responses.present}/${todayVisits} (${Math.round((responses.present/todayVisits)*100)}%)</small><br>
                             <small>Will Vote: ${responses.willVote}/${todayVisits} (${Math.round((responses.willVote/todayVisits)*100)}%)</small><br>
-                            <small>Next Time: ${responses.nextTime}/${todayVisits} (${Math.round((responses.nextTime/todayVisits)*100)}%)</small>
+                            <small>Visit Again: ${responses.visitAgain}/${todayVisits} (${Math.round((responses.visitAgain/todayVisits)*100)}%)</small>
                         </div>
                         ` : ''}
                         
@@ -2388,9 +2504,7 @@ ${voterPlacemarks}
             const partyFilter = document.getElementById('fieldPartyFilter').value;
             const statusFilter = document.getElementById('fieldStatusFilter').value;
             const precinctFilter = document.getElementById('fieldPrecinctFilter').value;
-            const ageFilter = document.getElementById('fieldAgeFilter').value;
-            const raceFilter = document.getElementById('fieldRaceFilter').value;
-            const genderFilter = document.getElementById('fieldGenderFilter').value;
+            const demScoreFilter = document.getElementById('fieldDemScoreFilter').value;
             const streetFilter = document.getElementById('fieldStreetFilter').value;
             const zipFilter = document.getElementById('fieldZipFilter').value;
             
@@ -2410,9 +2524,9 @@ ${voterPlacemarks}
             if (statusFilter === 'visited') filteredVoters = filteredVoters.filter(v => v.visited);
             if (statusFilter === 'not-visited') filteredVoters = filteredVoters.filter(v => !v.visited);
             if (precinctFilter) filteredVoters = filteredVoters.filter(v => v.precinct === precinctFilter);
-            if (ageFilter) filteredVoters = filteredVoters.filter(v => v.ageClass === ageFilter);
-            if (raceFilter) filteredVoters = filteredVoters.filter(v => v.race === raceFilter);
-            if (genderFilter) filteredVoters = filteredVoters.filter(v => v.gender === genderFilter);
+            if (demScoreFilter === 'high') filteredVoters = filteredVoters.filter(v => v.demScore >= 70);
+            if (demScoreFilter === 'medium') filteredVoters = filteredVoters.filter(v => v.demScore >= 40 && v.demScore < 70);
+            if (demScoreFilter === 'low') filteredVoters = filteredVoters.filter(v => v.demScore < 40);
             if (streetFilter) filteredVoters = filteredVoters.filter(v => v.address.includes(streetFilter));
             if (zipFilter) filteredVoters = filteredVoters.filter(v => v.zip === zipFilter);
             
@@ -2430,9 +2544,7 @@ ${voterPlacemarks}
             document.getElementById('fieldPartyFilter').value = '';
             document.getElementById('fieldStatusFilter').value = '';
             document.getElementById('fieldPrecinctFilter').value = '';
-            document.getElementById('fieldAgeFilter').value = '';
-            document.getElementById('fieldRaceFilter').value = '';
-            document.getElementById('fieldGenderFilter').value = '';
+            document.getElementById('fieldDemScoreFilter').value = '';
             document.getElementById('fieldStreetFilter').value = '';
             document.getElementById('fieldZipFilter').value = '';
             
@@ -2453,11 +2565,7 @@ ${voterPlacemarks}
             
             let assignedVoters = votersData.filter(v => v.assignedTo === currentUserId);
             
-            // Fallback for demo mode
-            if (assignedVoters.length === 0) {
-                assignedVoters = votersData.slice(0, 100);
-            }
-            
+            // No fallback needed - all voters are assigned
             const completedVoters = assignedVoters.filter(v => v.visited);
             const progressPercent = assignedVoters.length > 0 ? Math.round((completedVoters.length / assignedVoters.length) * 100) : 0;
             
@@ -2472,14 +2580,6 @@ ${voterPlacemarks}
                     document.getElementById('modalCompletedCount').textContent = completedVoters.length;
                     document.getElementById('modalPendingCount').textContent = assignedVoters.length - completedVoters.length;
                 }
-            }
-
-            // Update tracking data - handle case where tracking hasn't started
-            const totalTimeMinutes = (startTrackingTime && startTrackingTime instanceof Date) ? 
-                Math.round((new Date() - startTrackingTime) / 60000) : 0;
-            
-            if (document.getElementById('totalFieldTime')) {
-                document.getElementById('totalFieldTime').textContent = totalTimeMinutes;
             }
         }
 
@@ -2498,14 +2598,20 @@ ${voterPlacemarks}
                 return;
             }
 
+            // Get form values
+            const presentRadio = document.querySelector('input[name="presentRadio"]:checked');
+            const voteRadio = document.querySelector('input[name="voteRadio"]:checked');
+            const visitAgainRadio = document.querySelector('input[name="visitAgainRadio"]:checked');
+
             // Save notes
             currentVoter.visited = true;
             currentVoter.visitedAt = new Date().toISOString();
-            currentVoter.present = document.getElementById('present').checked;
-            currentVoter.willVote = document.getElementById('willVote').checked;
-            currentVoter.nextTime = document.getElementById('nextTime').checked;
+            currentVoter.present = presentRadio ? (presentRadio.value === 'true') : null;
+            currentVoter.willVote = voteRadio ? (voteRadio.value === 'true') : null;
+            currentVoter.visitAgain = visitAgainRadio ? (visitAgainRadio.value === 'true') : null;
             currentVoter.notes = document.getElementById('voterNotes').value;
             currentVoter.supportLevel = document.getElementById('supportLevel').value;
+            currentVoter.timeSpentSeconds = visitStartTime ? Math.floor((new Date() - visitStartTime) / 1000) : 0;
 
             // Add location data to the visit record
             if (canvasserLocation) {
@@ -2513,9 +2619,16 @@ ${voterPlacemarks}
                     lat: canvasserLocation.lat,
                     lng: canvasserLocation.lng,
                     accuracy: currentAccuracy,
-                    timeSpent: timeInCurrentArea
+                    timeSpent: currentVoter.timeSpentSeconds
                 };
             }
+
+            // Add to visit log
+            visitLog.push({
+                voter: currentVoter,
+                visitTime: new Date(),
+                timeSpent: currentVoter.timeSpentSeconds
+            });
 
             // Update marker style
             if (markers[currentVoter.id]) {
@@ -2540,9 +2653,17 @@ ${voterPlacemarks}
                     proximityAlert.style.display = 'none';
                 }
             }
+
+            // Remove route line
+            if (routeLine) {
+                map.removeLayer(routeLine);
+                routeLine = null;
+            }
+
             currentVoter = null;
             timeInCurrentArea = 0;
             locationValidationStatus = false;
+            visitStartTime = null;
 
             // Update displays
             applyFilters();
@@ -2554,7 +2675,16 @@ ${voterPlacemarks}
             
             // Reset form
             document.getElementById('notesForm').reset();
+            // Clear all radio buttons
+            document.querySelectorAll('input[type="radio"]').forEach(radio => {
+                radio.checked = false;
+            });
             updateFormValidation();
+
+            // Auto-find next nearest voter
+            setTimeout(() => {
+                findNearestVoter();
+            }, 1000);
         });
 
         // Update counts
@@ -2589,16 +2719,16 @@ ${voterPlacemarks}
             const responseBreakdown = {
                 present: 0,
                 willVote: 0,
-                nextTime: 0
+                visitAgain: 0
             };
             const supportBreakdown = {};
 
             visitedVoters.forEach(voter => {
                 partyBreakdown[voter.party] = (partyBreakdown[voter.party] || 0) + 1;
                 
-                if (voter.present) responseBreakdown.present++;
-                if (voter.willVote) responseBreakdown.willVote++;
-                if (voter.nextTime) responseBreakdown.nextTime++;
+                if (voter.present === true) responseBreakdown.present++;
+                if (voter.willVote === true) responseBreakdown.willVote++;
+                if (voter.visitAgain === true) responseBreakdown.visitAgain++;
                 
                 if (voter.supportLevel) {
                     supportBreakdown[voter.supportLevel] = (supportBreakdown[voter.supportLevel] || 0) + 1;
@@ -2646,8 +2776,8 @@ ${voterPlacemarks}
                             <span><strong>${responseBreakdown.willVote}</strong> (${Math.round((responseBreakdown.willVote/totalVisited)*100)}%)</span>
                         </div>
                         <div class="d-flex justify-content-between">
-                            <span><i class="fas fa-clock text-warning"></i> Next Time:</span> 
-                            <span><strong>${responseBreakdown.nextTime}</strong> (${Math.round((responseBreakdown.nextTime/totalVisited)*100)}%)</span>
+                            <span><i class="fas fa-redo text-warning"></i> Visit Again:</span> 
+                            <span><strong>${responseBreakdown.visitAgain}</strong> (${Math.round((responseBreakdown.visitAgain/totalVisited)*100)}%)</span>
                         </div>
                     </div>
                     
@@ -2666,6 +2796,277 @@ ${voterPlacemarks}
             `;
 
             summaryContent.innerHTML = summaryHTML;
+        }
+
+        // Complete Turf Function - Generate PDF Report with Charts and Spreadsheet
+        function completeTurf() {
+            const visitedVoters = votersData.filter(v => v.visited);
+            
+            if (visitedVoters.length === 0) {
+                showNotification('No visits completed yet. Complete some visits before generating the report.', 'warning');
+                return;
+            }
+
+            // Show loading notification
+            showNotification('Generating turf completion report with charts...', 'info');
+
+            try {
+                // Generate both PDF with charts and spreadsheet
+                generateTurfReportWithCharts(visitedVoters);
+                generateSpreadsheetReport(visitedVoters);
+            } catch (error) {
+                console.error('Error generating reports:', error);
+                showNotification('Error generating reports. Check console for details.', 'error');
+            }
+        }
+
+        function generateTurfReportWithCharts(visitedVoters) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Title
+            doc.setFontSize(20);
+            doc.setTextColor(40, 40, 40);
+            doc.text('Canvassing Turf Completion Report', 20, 20);
+            
+            // Date and summary
+            doc.setFontSize(12);
+            doc.setTextColor(80, 80, 80);
+            doc.text(`Generated: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`, 20, 35);
+            doc.text(`Total Visits: ${visitedVoters.length}`, 20, 45);
+            doc.text(`Completion Rate: ${Math.round((visitedVoters.length / votersData.length) * 100)}%`, 20, 55);
+            
+            // Support Level Pie Chart Data
+            doc.setFontSize(14);
+            doc.setTextColor(40, 40, 40);
+            doc.text('Support Level Distribution', 20, 75);
+            
+            const supportBreakdown = {};
+            visitedVoters.forEach(voter => {
+                if (voter.supportLevel) {
+                    supportBreakdown[voter.supportLevel] = (supportBreakdown[voter.supportLevel] || 0) + 1;
+                } else {
+                    supportBreakdown['No Response'] = (supportBreakdown['No Response'] || 0) + 1;
+                }
+            });
+            
+            // Draw pie chart manually
+            drawPieChart(doc, supportBreakdown, 110, 85, 25);
+            
+            // Will Vote Bar Chart
+            doc.text('Voting Intention Analysis', 20, 170);
+            
+            const willVoteYes = visitedVoters.filter(v => v.willVote === true).length;
+            const willVoteNo = visitedVoters.filter(v => v.willVote === false).length;
+            const willVoteUndecided = visitedVoters.length - willVoteYes - willVoteNo;
+            
+            const voteData = {
+                'Will Vote': willVoteYes,
+                'Will Not Vote': willVoteNo,
+                'Undecided': willVoteUndecided
+            };
+            
+            drawBarChart(doc, voteData, 20, 180, 160, 40);
+            
+            // Time Spent Frequency Table
+            doc.addPage();
+            doc.text('Time Spent Analysis', 20, 20);
+            
+            const timeRanges = {
+                'Under 30s': visitedVoters.filter(v => (v.timeSpentSeconds || 0) < 30).length,
+                '30-60s': visitedVoters.filter(v => (v.timeSpentSeconds || 0) >= 30 && (v.timeSpentSeconds || 0) < 60).length,
+                '1-2 min': visitedVoters.filter(v => (v.timeSpentSeconds || 0) >= 60 && (v.timeSpentSeconds || 0) < 120).length,
+                '2-5 min': visitedVoters.filter(v => (v.timeSpentSeconds || 0) >= 120 && (v.timeSpentSeconds || 0) < 300).length,
+                'Over 5 min': visitedVoters.filter(v => (v.timeSpentSeconds || 0) >= 300).length
+            };
+            
+            drawBarChart(doc, timeRanges, 20, 30, 160, 60);
+            
+            // Detailed Visit Log Table
+            doc.addPage();
+            doc.text('Detailed Visit Log', 20, 20);
+            
+            // Table headers
+            doc.setFontSize(8);
+            doc.setTextColor(0, 0, 0);
+            const headers = ['Name', 'Address', 'Party', 'Dem Score', 'Present', 'Will Vote', 'Support', 'Time (s)', 'Visit Time'];
+            const colWidths = [25, 35, 15, 15, 15, 15, 20, 15, 30];
+            let xPos = 10;
+            
+            headers.forEach((header, i) => {
+                doc.text(header, xPos, 35);
+                xPos += colWidths[i];
+            });
+            
+            // Table rows
+            let yPos = 45;
+            visitedVoters.forEach((voter, index) => {
+                if (yPos > 280) {
+                    doc.addPage();
+                    yPos = 20;
+                    // Redraw headers
+                    xPos = 10;
+                    headers.forEach((header, i) => {
+                        doc.text(header, xPos, yPos);
+                        xPos += colWidths[i];
+                    });
+                    yPos += 10;
+                }
+                
+                xPos = 10;
+                const rowData = [
+                    voter.name.substring(0, 12),
+                    voter.address.substring(0, 20),
+                    voter.party.substring(0, 3),
+                    voter.demScore.toString(),
+                    voter.present === true ? 'Yes' : (voter.present === false ? 'No' : 'N/A'),
+                    voter.willVote === true ? 'Yes' : (voter.willVote === false ? 'No' : 'N/A'),
+                    (voter.supportLevel || 'N/A').substring(0, 10),
+                    (voter.timeSpentSeconds || 0).toString(),
+                    new Date(voter.visitedAt).toLocaleTimeString()
+                ];
+                
+                rowData.forEach((data, i) => {
+                    doc.text(data, xPos, yPos);
+                    xPos += colWidths[i];
+                });
+                yPos += 6;
+            });
+            
+            // Save the PDF
+            const filename = `canvassing-report-${new Date().toISOString().split('T')[0]}.pdf`;
+            doc.save(filename);
+        }
+
+        function drawPieChart(doc, data, centerX, centerY, radius) {
+            const total = Object.values(data).reduce((sum, val) => sum + val, 0);
+            const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'];
+            
+            let startAngle = 0;
+            let colorIndex = 0;
+            let legendY = centerY + radius + 15;
+            
+            Object.entries(data).forEach(([label, value]) => {
+                const sliceAngle = (value / total) * 2 * Math.PI;
+                const endAngle = startAngle + sliceAngle;
+                
+                // Draw slice
+                doc.setFillColor(colors[colorIndex % colors.length]);
+                drawPieSlice(doc, centerX, centerY, radius, startAngle, endAngle);
+                
+                // Draw legend
+                doc.setFillColor(colors[colorIndex % colors.length]);
+                doc.rect(centerX + radius + 10, legendY - 2, 5, 5, 'F');
+                doc.setTextColor(0, 0, 0);
+                doc.setFontSize(10);
+                doc.text(`${label}: ${value} (${Math.round((value/total)*100)}%)`, centerX + radius + 20, legendY + 2);
+                
+                startAngle = endAngle;
+                colorIndex++;
+                legendY += 8;
+            });
+        }
+
+        function drawPieSlice(doc, centerX, centerY, radius, startAngle, endAngle) {
+            const startX = centerX + radius * Math.cos(startAngle);
+            const startY = centerY + radius * Math.sin(startAngle);
+            const endX = centerX + radius * Math.cos(endAngle);
+            const endY = centerY + radius * Math.sin(endAngle);
+            
+            doc.lines([
+                [startX - centerX, startY - centerY],
+                [endX - centerX, endY - centerY],
+                [0, 0]
+            ], centerX, centerY, [1, 1], 'F');
+        }
+
+        function drawBarChart(doc, data, x, y, width, height) {
+            const maxValue = Math.max(...Object.values(data));
+            const barWidth = width / Object.keys(data).length;
+            const colors = ['#36A2EB', '#FF6384', '#FFCE56', '#4BC0C0', '#9966FF'];
+            
+            let barX = x;
+            let colorIndex = 0;
+            
+            Object.entries(data).forEach(([label, value]) => {
+                const barHeight = (value / maxValue) * height;
+                
+                // Draw bar
+                doc.setFillColor(colors[colorIndex % colors.length]);
+                doc.rect(barX, y + height - barHeight, barWidth - 2, barHeight, 'F');
+                
+                // Draw value on top of bar
+                doc.setTextColor(0, 0, 0);
+                doc.setFontSize(8);
+                doc.text(value.toString(), barX + barWidth/2 - 3, y + height - barHeight - 2);
+                
+                // Draw label below bar
+                doc.text(label.substring(0, 8), barX, y + height + 8);
+                
+                barX += barWidth;
+                colorIndex++;
+            });
+            
+            // Draw axes
+            doc.setDrawColor(0, 0, 0);
+            doc.line(x, y, x, y + height); // Y axis
+            doc.line(x, y + height, x + width, y + height); // X axis
+        }
+
+        function generateSpreadsheetReport(visitedVoters) {
+            // Generate CSV data for spreadsheet
+            const headers = [
+                'Voter ID', 'Name', 'Address', 'City', 'State', 'Zip', 
+                'Party', 'Dem Score', 'Precinct', 'Age Class', 'Race', 'Gender',
+                'Present', 'Will Vote', 'Visit Again', 'Support Level', 'Notes',
+                'Time Spent (seconds)', 'Visit Date', 'Visit Time',
+                'Canvasser Location Lat', 'Canvasser Location Lng', 'GPS Accuracy'
+            ];
+            
+            const rows = [headers.join(',')];
+            
+            visitedVoters.forEach(voter => {
+                const row = [
+                    voter.id,
+                    `"${voter.name}"`,
+                    `"${voter.address}"`,
+                    voter.city,
+                    voter.state,
+                    voter.zip,
+                    voter.party,
+                    voter.demScore,
+                    voter.precinct,
+                    voter.ageClass,
+                    voter.race,
+                    voter.gender,
+                    voter.present === true ? 'Yes' : (voter.present === false ? 'No' : 'N/A'),
+                    voter.willVote === true ? 'Yes' : (voter.willVote === false ? 'No' : 'N/A'),
+                    voter.visitAgain === true ? 'Yes' : (voter.visitAgain === false ? 'No' : 'N/A'),
+                    voter.supportLevel || 'N/A',
+                    `"${voter.notes || ''}"`,
+                    voter.timeSpentSeconds || 0,
+                    voter.visitedAt ? new Date(voter.visitedAt).toLocaleDateString() : '',
+                    voter.visitedAt ? new Date(voter.visitedAt).toLocaleTimeString() : '',
+                    voter.visitLocation ? voter.visitLocation.lat.toFixed(6) : '',
+                    voter.visitLocation ? voter.visitLocation.lng.toFixed(6) : '',
+                    voter.visitLocation ? Math.round(voter.visitLocation.accuracy || 0) + 'm' : ''
+                ];
+                rows.push(row.join(','));
+            });
+            
+            // Add summary statistics at the end
+            rows.push(''); // Empty row
+            rows.push('SUMMARY STATISTICS');
+            rows.push(`Total Visits,${visitedVoters.length}`);
+            rows.push(`Total Assigned,${votersData.filter(v => v.assignedTo === currentUserId).length}`);
+            rows.push(`Completion Rate,${Math.round((visitedVoters.length / votersData.filter(v => v.assignedTo === currentUserId).length) * 100)}%`);
+            rows.push(`Average Time per Visit,${Math.round(visitedVoters.reduce((sum, v) => sum + (v.timeSpentSeconds || 0), 0) / visitedVoters.length)} seconds`);
+            
+            const csvData = rows.join('\n');
+            const filename = `canvassing-data-${new Date().toISOString().split('T')[0]}.csv`;
+            downloadCSV(csvData, filename);
+            
+            showNotification('Reports generated: PDF with charts and detailed spreadsheet!', 'success');
         }
 
         // Initialize modal filters when modal opens
